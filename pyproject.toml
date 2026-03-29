@@ -25,6 +25,7 @@ sentence-transformers = ["sentence-transformers>=2.0"]
 langchain = ["langchain-core>=0.2"]
 llamaindex = ["llama-index-core>=0.10"]
 autogen = ["pyautogen>=0.2"]
+langgraph = ["langgraph>=0.2", "langchain-openai>=0.1"]
 all = [
     "asyncpg>=0.29",
     "chromadb>=0.4",
@@ -40,6 +41,8 @@ all = [
     "langchain-core>=0.2",
     "llama-index-core>=0.10",
     "pyautogen>=0.2",
+    "langgraph>=0.2",
+    "langchain-openai>=0.1",
 ]
 
 [tool.setuptools]

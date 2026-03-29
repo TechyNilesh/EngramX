@@ -86,6 +86,7 @@ pip install engram[sentence-transformers]  # Local embeddings
 pip install engram[langchain]          # LangChain adapter
 pip install engram[llamaindex]         # LlamaIndex adapter
 pip install engram[autogen]            # AutoGen adapter
+pip install engram[langgraph]          # LangGraph agent memory
 pip install engram[all]                # Everything
 ```
 
@@ -408,6 +409,126 @@ memory = EngramAutoGenMemory(client=client, user_id="u-123")
 
 results = memory.query("payment preferences")
 memory.add("User prefers credit card payments.")
+```
+
+### LangGraph
+
+Use Engram as long-term memory in LangGraph agents. Engram handles cross-session memory while LangGraph checkpoints handle short-term thread state.
+
+```python
+from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import ToolNode
+from langchain_openai import ChatOpenAI
+from typing import Annotated, TypedDict
+import operator
+
+from engram import MemoryClient
+
+# Initialize Engram for long-term memory
+engram = MemoryClient(driver="sqlite")
+model = ChatOpenAI(model="gpt-4o-mini")
+
+
+# 1. Define graph state
+class AgentState(TypedDict):
+    messages: Annotated[list, operator.add]
+    memory_context: str
+    user_id: str
+
+
+# 2. Memory retrieval node — runs before LLM
+async def recall_memories(state: AgentState) -> dict:
+    """Retrieve relevant Engram memories and inject into context."""
+    user_msg = state["messages"][-1].content if state["messages"] else ""
+    user_id = state.get("user_id", "default")
+
+    memories = await engram.search(
+        query=user_msg,
+        filters={"user_id": user_id},
+        top_k=5,
+    )
+
+    if memories:
+        context = "\n".join(f"- {m.record.content}" for m in memories)
+    else:
+        context = "No relevant memories found."
+
+    return {"memory_context": context}
+
+
+# 3. LLM node — uses memories as context
+async def call_llm(state: AgentState) -> dict:
+    """Call LLM with memory-augmented context."""
+    system_msg = {
+        "role": "system",
+        "content": (
+            "You are a helpful assistant with memory.\n"
+            f"Relevant memories:\n{state.get('memory_context', 'None')}"
+        ),
+    }
+    response = await model.ainvoke([system_msg] + state["messages"])
+    return {"messages": [response]}
+
+
+# 4. Memory persistence node — runs after LLM response
+async def persist_memories(state: AgentState) -> dict:
+    """Store the conversation turn as episodic memory in Engram."""
+    user_id = state.get("user_id", "default")
+    messages = state["messages"]
+
+    if len(messages) >= 2:
+        user_msg = messages[-2].content
+        ai_msg = messages[-1].content
+        await engram.add(
+            type="episodic",
+            scope="user",
+            user_id=user_id,
+            content=f"User: {user_msg}\nAssistant: {ai_msg}",
+            source="conversation",
+            importance_score=0.7,
+        )
+
+    return {}
+
+
+# 5. Build the graph
+graph = StateGraph(AgentState)
+graph.add_node("recall", recall_memories)
+graph.add_node("llm", call_llm)
+graph.add_node("persist", persist_memories)
+
+graph.add_edge(START, "recall")
+graph.add_edge("recall", "llm")
+graph.add_edge("llm", "persist")
+graph.add_edge("persist", END)
+
+agent = graph.compile()
+
+# 6. Run
+# result = await agent.ainvoke({
+#     "messages": [HumanMessage(content="What units should I use?")],
+#     "user_id": "u-123",
+# })
+```
+
+**LangGraph + Engram architecture:**
+
+```
+┌─────────────────────────────────────────────────┐
+│                  LangGraph Agent                │
+│                                                 │
+│  START → [recall] → [llm] → [persist] → END    │
+│             │                    │               │
+│             ▼                    ▼               │
+│     ┌──────────────┐    ┌──────────────┐        │
+│     │    Engram     │    │    Engram     │        │
+│     │   search()    │    │    add()      │        │
+│     │  (long-term)  │    │  (long-term)  │        │
+│     └──────────────┘    └──────────────┘        │
+│                                                 │
+│  Short-term state: LangGraph checkpoints        │
+│  Long-term memory: Engram (any backend)         │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
