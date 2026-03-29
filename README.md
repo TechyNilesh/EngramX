@@ -286,7 +286,7 @@ python -m pytest -q
     src="https://github.com/TechyNilesh.png?size=160"
     alt="Nilesh Verma"
     width="60"
-    style="border-radius: 50%;"
+    style="border-radius: 0%;"
   />
 </a>
 
