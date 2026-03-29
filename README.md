@@ -6,7 +6,9 @@
   />
 </p>
 
-<h1 align="center">Engram</h1>
+<p align="center">
+  <strong>The Open-Source Agent Memory Framework</strong>
+</p>
 
 <p align="center">
   <a href="https://github.com/TechyNilesh/engram">
@@ -15,11 +17,7 @@
   <a href="https://github.com/TechyNilesh/engram">
     <img src="https://img.shields.io/badge/status-MVP-2ea44f" alt="Project status" />
   </a>
-  <img src="https://img.shields.io/badge/python-3.9%2B-3776AB?logo=python&logoColor=white" alt="Python 3.9+" />
-</p>
-
-<p align="center">
-  Framework-agnostic agent memory for Python: canonical memory records, policy-driven lifecycle rules, pluggable storage, and retrieval observability.
+  <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+" />
 </p>
 
 ## Features
@@ -95,6 +93,68 @@ async def main() -> None:
 asyncio.run(main())
 ```
 
+## Chat Example
+
+This is the same pattern as a simple Mem0-style chat loop, but using Engram:
+
+```python
+from openai import OpenAI
+
+from engram import MemoryClient
+
+openai_client = OpenAI()
+memory = MemoryClient(driver="sqlite")
+
+
+def chat_with_memories(message: str, user_id: str = "default_user") -> str:
+    relevant_memories = memory.search_sync(
+        query=message,
+        filters={"user_id": user_id},
+        top_k=3,
+    )
+    memories_str = "\n".join(f"- {entry.record.content}" for entry in relevant_memories) or "- None yet."
+
+    system_prompt = (
+        "You are a helpful AI. Answer the question based on the query and memories.\n"
+        f"User Memories:\n{memories_str}"
+    )
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": message},
+    ]
+    response = openai_client.chat.completions.create(
+        model="gpt-4.1-nano-2025-04-14",
+        messages=messages,
+    )
+    assistant_response = response.choices[0].message.content or ""
+
+    memory.add_sync(
+        type="episodic",
+        scope="user",
+        user_id=user_id,
+        content=f"User: {message}\nAssistant: {assistant_response}",
+        source="conversation",
+        importance_score=0.7,
+        sensitivity_level="internal",
+    )
+
+    return assistant_response
+
+
+def main() -> None:
+    print("Chat with AI (type 'exit' to quit)")
+    while True:
+        user_input = input("You: ").strip()
+        if user_input.lower() == "exit":
+            print("Goodbye!")
+            break
+        print(f"AI: {chat_with_memories(user_input)}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
 ## Policy Configuration
 
 Create an `engram.yaml` file:
@@ -109,7 +169,11 @@ policies:
     - name: extract-user-preferences
       trigger: conversation_turn
       conditions:
-        - content_matches: ["prefer", "always", "never", "like"]
+        - content_matches:
+            - prefer
+            - always
+            - never
+            - like
       create:
         type: semantic
         scope: user
@@ -129,17 +193,19 @@ policies:
     - name: promote-repeated-success
       applies_to:
         type: episodic
-      trigger: same_action_success_count >= 3
+      trigger: "same_action_success_count >= 3"
       promote_to:
         type: procedural
         scope: agent
-        content: Confirm prerequisites before executing repeated workflows.
+        content: "Confirm prerequisites before executing repeated workflows."
 
   governance:
     - name: gdpr-user-data
       applies_to:
         scope: user
-        sensitivity_level: [confidential, restricted]
+        sensitivity_level:
+          - confidential
+          - restricted
       retention_days: 30
       on_user_deletion: delete_all
       audit_log: true
@@ -212,3 +278,35 @@ python -m pytest -q
 
 - Source: [https://github.com/TechyNilesh/engram](https://github.com/TechyNilesh/engram)
 - Install latest from GitHub: `pip install "engram @ git+https://github.com/TechyNilesh/engram.git"`
+
+## Core Contributor
+
+<p align="center">
+  <a href="https://github.com/TechyNilesh">
+    <img
+      src="https://github.com/TechyNilesh.png?size=160"
+      alt="Nilesh Verma"
+      width="120"
+      style="border-radius: 50%;"
+    />
+  </a>
+</p>
+
+<p align="center">
+  <strong>Nilesh Verma</strong><br />
+  Core Contributor
+</p>
+
+## Citation
+
+If you use Engram in research, tooling, or internal platforms, cite the GitHub repository:
+
+```bibtex
+@software{verma2026engram,
+  author = {Nilesh Verma},
+  title = {Engram: The Open-Source Agent Memory Framework},
+  year = {2026},
+  url = {https://github.com/TechyNilesh/engram},
+  version = {0.1.0}
+}
+```
