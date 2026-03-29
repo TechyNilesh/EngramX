@@ -456,7 +456,7 @@ await scheduler.stop()
 
 ## Chat Example
 
-A Mem0-style chat loop using Engram:
+Example chat loop with persistent memory:
 
 ```python
 from openai import OpenAI
