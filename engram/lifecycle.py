@@ -1,12 +1,28 @@
 from __future__ import annotations
 
+import importlib
+import re
 from collections import defaultdict
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Iterable, Sequence
+from typing import Any, Callable, Iterable, Sequence
 
 from .config import GovernanceRule, RetentionRule, SummarizationRule
 from .models import MemorySignal
 from .schema import MemoryRecord, new_memory_id, parse_datetime, utcnow
+
+WORD_RE = re.compile(r"[A-Za-z0-9_]+")
+TRIGGER_COUNT_RE = re.compile(r"^same_[a-z0-9_]+_count\s*>=\s*(\d+)\s*$")
+
+
+@dataclass(slots=True)
+class GovernanceAuditEntry:
+    memory_id: str
+    rule_name: str
+    action: str
+    reason: str
+    timestamp: datetime
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 def _to_datetime(value: datetime | str | None) -> datetime:
@@ -27,6 +43,139 @@ def _matches_selector(record: MemoryRecord, selector: dict[str, Any]) -> bool:
 def _content_matches(content: str, patterns: Sequence[str]) -> bool:
     lowered = content.lower()
     return all(pattern.lower() in lowered for pattern in patterns)
+
+
+def _tokenize(text: str) -> set[str]:
+    return {token.lower() for token in WORD_RE.findall(text)}
+
+
+def _normalize_content(text: str) -> str:
+    return " ".join(WORD_RE.findall(text.lower()))
+
+
+def _default_group_signature(record: MemoryRecord) -> str:
+    payload = record.payload or {}
+    for key in ("action_signature", "action", "summary_signature", "cluster_signature", "topic"):
+        value = payload.get(key)
+        if value:
+            return str(value)
+    return _normalize_content(record.content)
+
+
+def _rule_threshold(trigger: str) -> int | None:
+    match = TRIGGER_COUNT_RE.match(trigger.strip())
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def _resolve_reflector(reflector: Any) -> Callable[[list[MemoryRecord], SummarizationRule, datetime], Any] | None:
+    if reflector is None:
+        return None
+    if callable(reflector):
+        return reflector
+    if isinstance(reflector, str) and reflector:
+        module_name, _, attr = reflector.rpartition(":")
+        if not module_name:
+            module_name, _, attr = reflector.rpartition(".")
+        if not module_name or not attr:
+            raise ValueError(f"Unsupported reflector path: {reflector!r}")
+        module = importlib.import_module(module_name)
+        resolved = getattr(module, attr)
+        if not callable(resolved):
+            raise TypeError(f"Reflector {reflector!r} is not callable")
+        return resolved
+    raise TypeError(f"Unsupported reflector value: {reflector!r}")
+
+
+def _semantic_summary_from_group(
+    group: list[MemoryRecord],
+    rule: SummarizationRule,
+    *,
+    now: datetime,
+) -> tuple[str, dict[str, Any]]:
+    token_counts: dict[str, int] = defaultdict(int)
+    for record in group:
+        for token in _tokenize(record.content):
+            token_counts[token] += 1
+    common_tokens = [token for token, count in sorted(token_counts.items()) if count == len(group)]
+    highlighted = common_tokens[:6] or sorted(token_counts, key=token_counts.get, reverse=True)[:6]
+    content = rule.promote_to.get("content")
+    if content:
+        summary_text = str(content)
+    elif highlighted:
+        summary_text = f"Distilled semantic rule from {len(group)} episodes: {' '.join(highlighted)}."
+    else:
+        summary_text = f"Distilled semantic rule from {len(group)} episodes."
+    payload = {
+        "source_record_ids": [item.id for item in group],
+        "distilled_from": [item.id for item in group],
+        "distillation_kind": "semantic",
+        "summary_model": rule.summary_model,
+        "rule_name": rule.name,
+        "generated_at": now.isoformat(),
+        "keywords": highlighted,
+    }
+    return summary_text, payload
+
+
+def _procedural_summary_from_group(
+    group: list[MemoryRecord],
+    rule: SummarizationRule,
+    *,
+    now: datetime,
+) -> tuple[str, dict[str, Any]]:
+    content = rule.promote_to.get("content")
+    if content:
+        summary_text = str(content)
+    else:
+        summary_text = f"Learned procedural pattern from {len(group)} successful episodes."
+    payload = {
+        "source_record_ids": [item.id for item in group],
+        "distilled_from": [item.id for item in group],
+        "distillation_kind": "procedural",
+        "summary_model": rule.summary_model,
+        "rule_name": rule.name,
+        "generated_at": now.isoformat(),
+    }
+    return summary_text, payload
+
+
+def _derive_summary(
+    group: list[MemoryRecord],
+    rule: SummarizationRule,
+    *,
+    now: datetime,
+) -> tuple[str, dict[str, Any]]:
+    reflector = _resolve_reflector(rule.reflector)
+    if reflector is not None:
+        result = reflector(group, rule, now)
+        if isinstance(result, MemoryRecord):
+            payload = result.to_dict()
+            payload.setdefault("source_record_ids", [item.id for item in group])
+            payload.setdefault("distilled_from", [item.id for item in group])
+            payload.setdefault("rule_name", rule.name)
+            return result.content, payload
+        if isinstance(result, dict):
+            content = str(result.get("content") or result.get("summary") or "")
+            payload = dict(result)
+            payload.setdefault("source_record_ids", [item.id for item in group])
+            payload.setdefault("distilled_from", [item.id for item in group])
+            payload.setdefault("rule_name", rule.name)
+            return content or _procedural_summary_from_group(group, rule, now=now)[0], payload
+        if result is not None:
+            content = str(result)
+            return content, {
+                "source_record_ids": [item.id for item in group],
+                "distilled_from": [item.id for item in group],
+                "rule_name": rule.name,
+                "summary_model": rule.summary_model,
+            }
+
+    target_type = rule.promote_to.get("type", "procedural")
+    if target_type == "semantic":
+        return _semantic_summary_from_group(group, rule, now=now)
+    return _procedural_summary_from_group(group, rule, now=now)
 
 
 def _safe_formula(formula: str, signal: MemorySignal) -> float:
@@ -117,6 +266,76 @@ def extract_records(
     return extracted
 
 
+def _group_records_for_rule(
+    records: Iterable[MemoryRecord],
+    rule: SummarizationRule,
+) -> dict[str, list[MemoryRecord]]:
+    grouped: dict[str, list[MemoryRecord]] = defaultdict(list)
+    for record in records:
+        if not _matches_selector(record, rule.applies_to):
+            continue
+        if record.type != "episodic":
+            continue
+        payload = record.payload or {}
+        if payload.get("success") is False and "success" in rule.trigger:
+            continue
+        grouped[_default_group_signature(record)].append(record)
+    return grouped
+
+
+def summarize_records(
+    records: Iterable[MemoryRecord],
+    rules: Iterable[SummarizationRule],
+    *,
+    now: datetime | None = None,
+) -> list[MemoryRecord]:
+    current = _to_datetime(now)
+    promoted: list[MemoryRecord] = []
+    for rule in rules:
+        threshold = _rule_threshold(rule.trigger)
+        if threshold is None:
+            continue
+        grouped = _group_records_for_rule(records, rule)
+        for _, group in grouped.items():
+            if len(group) < threshold:
+                continue
+            content, payload = _derive_summary(group, rule, now=current)
+            target_type = rule.promote_to.get("type", "procedural")
+            promoted.append(
+                MemoryRecord(
+                    id=new_memory_id(),
+                    type=target_type,
+                    scope=rule.promote_to.get("scope", "agent"),
+                    content=content,
+                    agent_id=group[0].agent_id,
+                    user_id=group[0].user_id,
+                    session_id=group[0].session_id,
+                    payload=payload,
+                    timestamp_created=current,
+                    timestamp_updated=current,
+                    source="reflection",
+                    provenance=[item.id for item in group],
+                    derived_from=[item.id for item in group],
+                    importance_score=max(item.importance_score for item in group),
+                    sensitivity_level=group[0].sensitivity_level,
+                    retention_policy=group[0].retention_policy,
+                    access_roles=list(group[0].access_roles),
+                    valid_from=group[0].valid_from,
+                    valid_to=group[0].valid_to,
+                )
+            )
+    return promoted
+
+
+def promote_repeated_success(
+    records: Iterable[MemoryRecord],
+    rules: Iterable[SummarizationRule],
+    *,
+    now: datetime | None = None,
+) -> list[MemoryRecord]:
+    return summarize_records(records, rules, now=now)
+
+
 def compute_decay_factor(
     record: MemoryRecord,
     rules: Iterable[RetentionRule],
@@ -146,6 +365,69 @@ def compute_decay_factor(
     return min(factors) if factors else record.decay_factor
 
 
+def _apply_governance_deletion(
+    records: Iterable[MemoryRecord],
+    rules: Iterable[GovernanceRule],
+    *,
+    user_id: str | None = None,
+    reason: str = "user_deletion",
+    now: datetime | None = None,
+) -> tuple[list[MemoryRecord], int, list[GovernanceAuditEntry]]:
+    current = _to_datetime(now)
+    kept: list[MemoryRecord] = []
+    deleted = 0
+    audit_log: list[GovernanceAuditEntry] = []
+    for record in records:
+        should_delete = False
+        matched_rule: GovernanceRule | None = None
+        matched_any = False
+        for rule in rules:
+            if not _matches_selector(record, rule.applies_to):
+                continue
+            matched_any = True
+            if user_id is not None and record.user_id != user_id:
+                continue
+            matched_rule = rule
+            if reason == "user_deletion" and rule.on_user_deletion == "delete_all":
+                should_delete = True
+            elif rule.retention_days is not None:
+                age_days = (current - _to_datetime(record.timestamp_created)).total_seconds() / 86400.0
+                if age_days >= rule.retention_days:
+                    should_delete = True
+            audit_log.append(
+                GovernanceAuditEntry(
+                    memory_id=record.id,
+                    rule_name=rule.name,
+                    action="delete" if should_delete else "retain",
+                    reason=reason,
+                    timestamp=current,
+                    details={
+                        "retention_days": rule.retention_days,
+                        "on_user_deletion": rule.on_user_deletion,
+                        "audit_log": rule.audit_log,
+                        "sensitivity_level": record.sensitivity_level,
+                    },
+                )
+            )
+            if should_delete:
+                deleted += 1
+                break
+        if not should_delete:
+            kept.append(record)
+        elif matched_rule is None and matched_any:
+            audit_log.append(
+                GovernanceAuditEntry(
+                    memory_id=record.id,
+                    rule_name="unmatched",
+                    action="delete",
+                    reason=reason,
+                    timestamp=current,
+                    details={"reason": "matched_selector_but_no_retention_action"},
+                )
+            )
+    return kept, deleted, audit_log
+
+
 def apply_governance_deletion(
     records: Iterable[MemoryRecord],
     rules: Iterable[GovernanceRule],
@@ -153,77 +435,15 @@ def apply_governance_deletion(
     user_id: str | None = None,
     reason: str = "user_deletion",
     now: datetime | None = None,
-) -> tuple[list[MemoryRecord], int]:
-    current = _to_datetime(now)
-    kept: list[MemoryRecord] = []
-    deleted = 0
-    for record in records:
-        should_delete = False
-        for rule in rules:
-            if not _matches_selector(record, rule.applies_to):
-                continue
-            if user_id is not None and record.user_id != user_id:
-                continue
-            if reason == "user_deletion" and rule.on_user_deletion == "delete_all":
-                should_delete = True
-            elif rule.retention_days is not None:
-                age_days = (current - _to_datetime(record.timestamp_created)).total_seconds() / 86400.0
-                if age_days >= rule.retention_days:
-                    should_delete = True
-            if should_delete:
-                deleted += 1
-                break
-        if not should_delete:
-            kept.append(record)
+    include_audit_log: bool = False,
+) -> tuple[list[MemoryRecord], int] | tuple[list[MemoryRecord], int, list[GovernanceAuditEntry]]:
+    kept, deleted, audit_log = _apply_governance_deletion(
+        records,
+        rules,
+        user_id=user_id,
+        reason=reason,
+        now=now,
+    )
+    if include_audit_log:
+        return kept, deleted, audit_log
     return kept, deleted
-
-
-def promote_repeated_success(
-    records: Iterable[MemoryRecord],
-    rules: Iterable[SummarizationRule],
-    *,
-    now: datetime | None = None,
-) -> list[MemoryRecord]:
-    current = _to_datetime(now)
-    promoted: list[MemoryRecord] = []
-    by_signature: dict[str, list[MemoryRecord]] = defaultdict(list)
-    for record in records:
-        if record.type != "episodic":
-            continue
-        payload = record.payload or {}
-        signature = payload.get("action_signature") or payload.get("action") or record.content
-        if payload.get("success") is True or payload.get("outcome") == "success":
-            by_signature[str(signature)].append(record)
-
-    for rule in rules:
-        if not rule.trigger.startswith("same_action_success_count >="):
-            continue
-        threshold = int(rule.trigger.split(">=", 1)[1].strip())
-        for signature, group in by_signature.items():
-            if len(group) < threshold or not _matches_selector(group[0], rule.applies_to):
-                continue
-            source_payload = dict(group[0].payload or {})
-            source_payload["action_signature"] = signature
-            source_payload["source_record_ids"] = [item.id for item in group]
-            promoted.append(
-                MemoryRecord(
-                    id=new_memory_id(),
-                    type=rule.promote_to.get("type", "procedural"),
-                    scope=rule.promote_to.get("scope", "agent"),
-                    content=rule.promote_to.get("content") or group[0].content,
-                    agent_id=group[0].agent_id,
-                    user_id=group[0].user_id,
-                    session_id=group[0].session_id,
-                    payload=source_payload,
-                    timestamp_created=current,
-                    timestamp_updated=current,
-                    source="reflection",
-                    provenance=[item.id for item in group],
-                    derived_from=[item.id for item in group],
-                    importance_score=max(item.importance_score for item in group),
-                    sensitivity_level=group[0].sensitivity_level,
-                    retention_policy=group[0].retention_policy,
-                    access_roles=list(group[0].access_roles),
-                )
-            )
-    return promoted

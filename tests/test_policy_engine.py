@@ -211,6 +211,49 @@ class PolicyEngineTests(unittest.TestCase):
         self.assertEqual(2, deleted)
         self.assertEqual(["mem-3"], [record.id for record in kept])
 
+    def test_governance_can_return_audit_log(self) -> None:
+        config = load_policy_config(
+            {
+                "policies": {
+                    "governance": [
+                        {
+                            "name": "gdpr-user-data",
+                            "applies_to": {
+                                "scope": "user",
+                                "sensitivity_level": ["confidential", "restricted"],
+                            },
+                            "retention_days": 30,
+                            "on_user_deletion": "delete_all",
+                            "audit_log": True,
+                        }
+                    ]
+                }
+            }
+        )
+        engine = PolicyEngine(config)
+        records = [
+            MemoryRecord(
+                id="mem-1",
+                type="semantic",
+                scope="user",
+                content="Sensitive preference",
+                user_id="u-123",
+                sensitivity_level="confidential",
+            )
+        ]
+
+        kept, deleted, audit_log = engine.apply_governance(
+            records,
+            user_id="u-123",
+            now=self.now,
+            include_audit_log=True,
+        )
+        self.assertEqual([], kept)
+        self.assertEqual(1, deleted)
+        self.assertEqual(1, len(audit_log))
+        self.assertEqual("delete", audit_log[0].action)
+        self.assertEqual("gdpr-user-data", audit_log[0].rule_name)
+
     def test_governance_retention_period_expires_records(self) -> None:
         config = load_policy_config(
             {
@@ -247,6 +290,57 @@ class PolicyEngineTests(unittest.TestCase):
         kept, deleted = engine.apply_governance(records, reason="retention", now=self.now)
         self.assertEqual(1, deleted)
         self.assertEqual([], kept)
+
+    def test_semantic_distillation_uses_reflector_and_summary_model(self) -> None:
+        def reflector(records, rule, now):
+            return {
+                "content": "User prefers metric units.",
+                "summary_model": rule.summary_model,
+                "source_record_ids": [record.id for record in records],
+                "generated_at": now.isoformat(),
+            }
+
+        config = load_policy_config(
+            {
+                "policies": {
+                    "summarization": [
+                        {
+                            "name": "distill-user-preference",
+                            "applies_to": {"type": "episodic", "scope": "session"},
+                            "trigger": "same_action_success_count >= 2",
+                            "promote_to": {
+                                "type": "semantic",
+                                "scope": "user",
+                            },
+                            "summary_model": "gpt-4o-mini",
+                            "reflector": reflector,
+                        }
+                    ]
+                }
+            }
+        )
+        engine = PolicyEngine(config)
+        episodes = [
+            MemoryRecord(
+                id=f"ep-{index}",
+                type="episodic",
+                scope="session",
+                content="User prefers metric units.",
+                user_id="u-123",
+                payload={"action_signature": "unit_preference", "success": True},
+                importance_score=0.8,
+            )
+            for index in range(2)
+        ]
+
+        summaries = engine.summarize(episodes, now=self.now)
+        self.assertEqual(1, len(summaries))
+        summary = summaries[0]
+        self.assertEqual("semantic", summary.type)
+        self.assertEqual("user", summary.scope)
+        self.assertEqual("User prefers metric units.", summary.content)
+        self.assertEqual("gpt-4o-mini", summary.payload["summary_model"])
+        self.assertEqual(["ep-0", "ep-1"], summary.payload["source_record_ids"])
 
     def test_promotion_creates_procedural_memory_after_repeated_success(self) -> None:
         config = load_policy_config(

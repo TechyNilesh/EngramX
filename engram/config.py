@@ -36,6 +36,8 @@ class SummarizationRule:
     applies_to: dict[str, Any] = field(default_factory=dict)
     trigger: str = ""
     promote_to: dict[str, Any] = field(default_factory=dict)
+    summary_model: str | None = None
+    reflector: Any | None = None
 
 
 @dataclass(slots=True)
