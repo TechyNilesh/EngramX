@@ -11,6 +11,34 @@ dependencies = ["PyYAML>=6.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+postgres = ["asyncpg>=0.29"]
+chroma = ["chromadb>=0.4"]
+qdrant = ["qdrant-client>=1.7"]
+redis = ["redis>=5.0"]
+neo4j = ["neo4j>=5.0"]
+mem0 = ["mem0ai>=0.1"]
+zep = ["zep-python>=2.0"]
+openai = ["openai>=1.0"]
+anthropic = ["anthropic>=0.30"]
+sentence-transformers = ["sentence-transformers>=2.0"]
+langchain = ["langchain-core>=0.2"]
+llamaindex = ["llama-index-core>=0.10"]
+autogen = ["pyautogen>=0.2"]
+all = [
+    "asyncpg>=0.29",
+    "chromadb>=0.4",
+    "qdrant-client>=1.7",
+    "redis>=5.0",
+    "neo4j>=5.0",
+    "mem0ai>=0.1",
+    "zep-python>=2.0",
+    "openai>=1.0",
+    "anthropic>=0.30",
+    "sentence-transformers>=2.0",
+    "langchain-core>=0.2",
+    "llama-index-core>=0.10",
+    "pyautogen>=0.2",
+]
 
 [tool.setuptools]
-packages = ["engram", "engram.storage"]
+packages = ["engram", "engram.storage", "engram.adapters"]

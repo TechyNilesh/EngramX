@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from engram.adapters import EngramChatAdapter
 from engram.client import MemoryClient
+from engram.observability import ScoredMemory
 from engram.storage.memory import InMemoryDriver
 
 
@@ -21,14 +21,17 @@ async def test_run_with_attribution_uses_retrieved_memories():
 
     captured = {}
 
-    async def responder(messages):
-        captured["messages"] = messages
-        return {"choices": [{"message": {"content": "Use metric units."}}]}
+    async def runner(prompt: str, memories: list[ScoredMemory]) -> str:
+        captured["prompt"] = prompt
+        captured["memories"] = memories
+        return "Use metric units."
 
-    adapter = EngramChatAdapter(client=client, responder=responder)
-    response, attribution = await adapter.run_with_attribution("What units should I use?", user_id="u-1")
+    response, attribution = await client.run_with_attribution(
+        "What units should I use?",
+        user_id="u-1",
+        runner=runner,
+    )
 
     assert response == "Use metric units."
     assert attribution.memories_used
-    assert captured["messages"][0]["role"] == "system"
-    assert "User prefers metric units." in captured["messages"][0]["content"]
+    assert "User prefers metric units." in captured["prompt"]

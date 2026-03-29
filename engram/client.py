@@ -79,6 +79,29 @@ class MemoryClient:
             return InMemoryDriver()
         if driver == "sqlite":
             return SQLiteDriver(self.config.driver.path)
+        if driver == "postgres":
+            from .storage.postgres import PostgresDriver
+            return PostgresDriver(dsn=self.config.driver.path)
+        if driver == "chroma":
+            from .storage.chroma import ChromaDriver
+            path = self.config.driver.path if self.config.driver.path != ":memory:" else None
+            return ChromaDriver(path=path)
+        if driver == "qdrant":
+            from .storage.qdrant import QdrantDriver
+            url = self.config.driver.path if self.config.driver.path != ":memory:" else None
+            return QdrantDriver(url=url)
+        if driver == "redis":
+            from .storage.redis import RedisDriver
+            return RedisDriver(url=self.config.driver.path)
+        if driver == "neo4j":
+            from .storage.neo4j import Neo4jDriver
+            return Neo4jDriver(uri=self.config.driver.path)
+        if driver == "mem0":
+            from .storage.mem0 import Mem0Driver
+            return Mem0Driver()
+        if driver == "zep":
+            from .storage.zep import ZepDriver
+            return ZepDriver(api_key=self.config.driver.path)
         raise ValueError(f"Unsupported driver: {driver}")
 
     async def add(self, record: MemoryRecord | None = None, **kwargs: Any) -> str:

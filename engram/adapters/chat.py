@@ -4,9 +4,9 @@ import inspect
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable, Iterable, Mapping
 
-from .client import MemoryClient
-from .models import MemorySignal
-from .observability import OutputAttribution, ScoredMemory
+from ..client import MemoryClient
+from ..models import MemorySignal
+from ..observability import OutputAttribution, ScoredMemory
 
 
 Responder = Callable[[list[dict[str, str]]], Any]

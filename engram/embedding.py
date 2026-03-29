@@ -4,7 +4,7 @@ import hashlib
 import math
 import re
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Any, Protocol
 
 from .schema import MemoryRecord
 
@@ -57,6 +57,85 @@ class HashEmbedder:
 
     def embed(self, text: str) -> list[float]:
         return embed_text(text, dims=self.dims)
+
+
+def _dependency_available(module_name: str) -> bool:
+    """Check whether an optional dependency is importable."""
+    import importlib
+
+    try:
+        importlib.import_module(module_name)
+        return True
+    except ImportError:
+        return False
+
+
+class OpenAIEmbedder:
+    """Embedder backed by OpenAI's embedding API (requires ``openai`` package)."""
+
+    def __init__(
+        self,
+        model: str = "text-embedding-3-small",
+        api_key: str | None = None,
+        dimensions: int | None = None,
+    ) -> None:
+        if not _dependency_available("openai"):
+            raise ImportError(
+                "The 'openai' package is required for OpenAIEmbedder. "
+                "Install it with: pip install openai"
+            )
+        import openai
+
+        self.model = model
+        self.dimensions = dimensions
+        self._client = openai.OpenAI(api_key=api_key) if api_key else openai.OpenAI()
+
+    def embed(self, text: str) -> list[float]:
+        kwargs: dict[str, Any] = {"input": text, "model": self.model}
+        if self.dimensions is not None:
+            kwargs["dimensions"] = self.dimensions
+        response = self._client.embeddings.create(**kwargs)
+        return list(response.data[0].embedding)
+
+
+class SentenceTransformerEmbedder:
+    """Embedder backed by the ``sentence-transformers`` library (local models)."""
+
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
+        if not _dependency_available("sentence_transformers"):
+            raise ImportError(
+                "The 'sentence-transformers' package is required for "
+                "SentenceTransformerEmbedder. Install it with: "
+                "pip install sentence-transformers"
+            )
+        from sentence_transformers import SentenceTransformer
+
+        self.model_name = model_name
+        self._model = SentenceTransformer(model_name)
+
+    def embed(self, text: str) -> list[float]:
+        vector = self._model.encode(text, convert_to_numpy=True)
+        return vector.tolist()
+
+
+def create_embedder(provider: str = "hash", **kwargs: Any) -> Embedder:
+    """Factory that returns the appropriate :class:`Embedder` implementation.
+
+    Parameters
+    ----------
+    provider:
+        One of ``"hash"`` (default, no dependencies), ``"openai"``, or
+        ``"sentence_transformers"``.
+    **kwargs:
+        Forwarded to the chosen embedder constructor.
+    """
+    if provider == "hash":
+        return HashEmbedder(**kwargs)
+    if provider == "openai":
+        return OpenAIEmbedder(**kwargs)
+    if provider in ("sentence_transformers", "sentence-transformers", "st"):
+        return SentenceTransformerEmbedder(**kwargs)
+    raise ValueError(f"Unknown embedding provider: {provider!r}")
 
 
 def cosine_similarity(a: Sequence[float] | None, b: Sequence[float] | None) -> float:
