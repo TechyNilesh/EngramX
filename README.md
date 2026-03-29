@@ -26,16 +26,6 @@
 
 An **engram** (from the Greek *engramma*, "that which is written on") is the neuroscience term for the physical trace a memory leaves in the brain. The name maps directly to this project goal: structured, durable, queryable memory for AI agents.
 
-### Alternative Names Considered
-
-| Name | Origin | Vibe |
-| --- | --- | --- |
-| **Engram** | Neuroscience memory trace | Precise, scientific, memorable |
-| Mneme | Greek muse of memory | Elegant, minimal |
-| Loci | Method of loci | Spatial, classical |
-| Eidetic | Perfect recall | Aspirational |
-| Palimpsest | Layered rewritten manuscript | Poetic, layered memory metaphor |
-
 ## Ecosystem Comparison
 
 | System | Memory Concept | Lock-in |
