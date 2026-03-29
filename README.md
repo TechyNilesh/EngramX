@@ -53,8 +53,8 @@ The current ecosystem for agent memory is fragmented, framework-locked, and unde
 - **Policy engine** — Declarative YAML rules for extraction, retention decay, summarization/promotion, and GDPR governance
 - **Observability** — Retrieval traces, memory timelines, output attribution, and `explain()` as a first-class API
 - **Hybrid retrieval** — Lexical + vector + importance + decay scoring with configurable modes
-- **Embedding providers** — Built-in hash embedder, OpenAI, and Sentence Transformers
-- **LLM reflection** — Pluggable OpenAI/Anthropic reflectors for summarizing episodic memory into durable knowledge
+- **Embedding providers** — OpenAI, Gemini, Cohere, Mistral, Together AI, LiteLLM (100+ providers), Sentence Transformers, and built-in hash embedder
+- **LLM reflection** — Pluggable reflectors (OpenAI, Anthropic, LiteLLM, or any OpenAI-compatible provider via `base_url`) for summarizing episodic memory into durable knowledge
 - **Framework adapters** — Thin integrations for LangChain, LlamaIndex, and AutoGen
 - **Agent runner** — `EngramAgent` with `run_with_attribution()` for tracking which memories influenced output
 - **Background jobs** — `PolicyJobScheduler` for scheduled decay, promotion, and governance enforcement
@@ -81,6 +81,7 @@ pip install engram[mem0]               # Mem0 delegation
 pip install engram[zep]                # Zep delegation
 pip install engram[openai]             # OpenAI embeddings + reflection
 pip install engram[anthropic]          # Anthropic reflection
+pip install engram[litellm]            # LiteLLM (100+ providers)
 pip install engram[sentence-transformers]  # Local embeddings
 pip install engram[langchain]          # LangChain adapter
 pip install engram[llamaindex]         # LlamaIndex adapter
@@ -275,7 +276,7 @@ client = MemoryClient(config="engram.yaml")
 
 ## Embedding Providers
 
-Engram ships with a dependency-free hash embedder and supports real embedding models:
+Engram ships with a dependency-free hash embedder and supports real embedding models. The OpenAI embedder uses the OpenAI SDK format which works with **any compatible provider** via `base_url`.
 
 ```python
 from engram import create_embedder
@@ -283,15 +284,59 @@ from engram import create_embedder
 # Default: hash-based (no dependencies, deterministic)
 embedder = create_embedder("hash")
 
-# OpenAI (requires: pip install engram[openai])
+# OpenAI
 embedder = create_embedder("openai", model="text-embedding-3-small")
 
-# Sentence Transformers (requires: pip install engram[sentence-transformers])
+# Google Gemini (OpenAI-compatible endpoint)
+embedder = create_embedder("openai",
+    model="gemini-embedding-001",
+    api_key="GEMINI_KEY",
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+)
+
+# Cohere (OpenAI-compatible endpoint)
+embedder = create_embedder("openai",
+    model="embed-english-v3.0",
+    api_key="COHERE_KEY",
+    base_url="https://api.cohere.ai/compatibility/v1",
+)
+
+# Mistral
+embedder = create_embedder("openai",
+    model="mistral-embed",
+    api_key="MISTRAL_KEY",
+    base_url="https://api.mistral.ai/v1",
+)
+
+# Together AI
+embedder = create_embedder("openai",
+    model="togethercomputer/m2-bert-80M-8k-retrieval",
+    api_key="TOGETHER_KEY",
+    base_url="https://api.together.xyz/v1",
+)
+
+# LiteLLM — unified interface for 100+ providers
+embedder = create_embedder("litellm", model="cohere/embed-english-v3.0")
+embedder = create_embedder("litellm", model="gemini/gemini-embedding-001")
+embedder = create_embedder("litellm", model="bedrock/amazon.titan-embed-text-v1")
+
+# Sentence Transformers (local models)
 embedder = create_embedder("sentence_transformers", model_name="all-MiniLM-L6-v2")
 
 # Pass to client
 client = MemoryClient(driver="memory", embedder=embedder)
 ```
+
+| Provider | Via | Install |
+|---|---|---|
+| OpenAI | `create_embedder("openai")` | `pip install engram[openai]` |
+| Google Gemini | `create_embedder("openai", base_url=...)` | `pip install engram[openai]` |
+| Cohere | `create_embedder("openai", base_url=...)` | `pip install engram[openai]` |
+| Mistral | `create_embedder("openai", base_url=...)` | `pip install engram[openai]` |
+| Together AI | `create_embedder("openai", base_url=...)` | `pip install engram[openai]` |
+| LiteLLM (100+) | `create_embedder("litellm")` | `pip install engram[litellm]` |
+| Sentence Transformers | `create_embedder("sentence_transformers")` | `pip install engram[sentence-transformers]` |
+| Hash (local, no deps) | `create_embedder("hash")` | — |
 
 ---
 
@@ -302,13 +347,23 @@ Summarize episodic memory into durable knowledge using LLM-powered reflection:
 ```python
 from engram import create_reflector
 
-# OpenAI reflector
+# OpenAI
 reflector = create_reflector("openai", model="gpt-4o-mini")
 
-# Anthropic reflector
+# Any OpenAI-compatible provider via base_url
+reflector = create_reflector("openai",
+    model="gemini-2.0-flash",
+    api_key="GEMINI_KEY",
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+)
+
+# Anthropic
 reflector = create_reflector("anthropic", model="claude-sonnet-4-20250514")
 
-# Use as a policy reflector for summarization rules
+# LiteLLM — any of 100+ providers
+reflector = create_reflector("litellm", model="anthropic/claude-sonnet-4-20250514")
+reflector = create_reflector("litellm", model="gemini/gemini-2.0-flash")
+reflector = create_reflector("litellm", model="cohere/command-r-plus")
 ```
 
 ---

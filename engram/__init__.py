@@ -10,7 +10,7 @@ from .jobs import JobRunReport, PolicyJobScheduler
 from .models import MemorySignal
 from .observability import MemoryTimelineEvent, MemoryTrace, OutputAttribution, ScoredMemory
 from .policy import PolicyEngine, PolicyOutcome
-from .reflection import LLMReflector, create_reflector
+from .reflection import LiteLLMReflector, LLMReflector, create_reflector
 from .schema import MemoryRecord, MemoryScope, MemoryType, SensitivityLevel
 from .storage.base import BaseDriver
 from .storage.chroma import ChromaDriver
@@ -38,6 +38,7 @@ __all__ = [
     "HashEmbedder",
     "InMemoryDriver",
     "JobRunReport",
+    "LiteLLMReflector",
     "LLMReflector",
     "Mem0Driver",
     "MemoryClient",

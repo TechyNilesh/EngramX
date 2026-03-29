@@ -71,12 +71,50 @@ def _dependency_available(module_name: str) -> bool:
 
 
 class OpenAIEmbedder:
-    """Embedder backed by OpenAI's embedding API (requires ``openai`` package)."""
+    """Embedder using the OpenAI SDK format — works with any compatible provider.
+
+    Supports OpenAI, Gemini, Cohere, Mistral, Together AI, and any provider
+    that exposes an OpenAI-compatible ``/embeddings`` endpoint via ``base_url``.
+
+    Examples::
+
+        # OpenAI (default)
+        embedder = OpenAIEmbedder(model="text-embedding-3-small")
+
+        # Google Gemini
+        embedder = OpenAIEmbedder(
+            model="gemini-embedding-001",
+            api_key="GEMINI_KEY",
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+        )
+
+        # Cohere
+        embedder = OpenAIEmbedder(
+            model="embed-english-v3.0",
+            api_key="COHERE_KEY",
+            base_url="https://api.cohere.ai/compatibility/v1",
+        )
+
+        # Mistral
+        embedder = OpenAIEmbedder(
+            model="mistral-embed",
+            api_key="MISTRAL_KEY",
+            base_url="https://api.mistral.ai/v1",
+        )
+
+        # Together AI
+        embedder = OpenAIEmbedder(
+            model="togethercomputer/m2-bert-80M-8k-retrieval",
+            api_key="TOGETHER_KEY",
+            base_url="https://api.together.xyz/v1",
+        )
+    """
 
     def __init__(
         self,
         model: str = "text-embedding-3-small",
         api_key: str | None = None,
+        base_url: str | None = None,
         dimensions: int | None = None,
     ) -> None:
         if not _dependency_available("openai"):
@@ -88,7 +126,12 @@ class OpenAIEmbedder:
 
         self.model = model
         self.dimensions = dimensions
-        self._client = openai.OpenAI(api_key=api_key) if api_key else openai.OpenAI()
+        client_kwargs: dict[str, Any] = {}
+        if api_key is not None:
+            client_kwargs["api_key"] = api_key
+        if base_url is not None:
+            client_kwargs["base_url"] = base_url
+        self._client = openai.OpenAI(**client_kwargs)
 
     def embed(self, text: str) -> list[float]:
         kwargs: dict[str, Any] = {"input": text, "model": self.model}
@@ -96,6 +139,54 @@ class OpenAIEmbedder:
             kwargs["dimensions"] = self.dimensions
         response = self._client.embeddings.create(**kwargs)
         return list(response.data[0].embedding)
+
+
+class LiteLLMEmbedder:
+    """Embedder backed by LiteLLM — unified interface for 100+ providers.
+
+    Supports OpenAI, Gemini, Cohere, Mistral, Bedrock, Azure, Voyage,
+    and any provider supported by litellm.
+
+    Examples::
+
+        # OpenAI
+        embedder = LiteLLMEmbedder(model="text-embedding-3-small")
+
+        # Cohere
+        embedder = LiteLLMEmbedder(model="cohere/embed-english-v3.0")
+
+        # Gemini
+        embedder = LiteLLMEmbedder(model="gemini/gemini-embedding-001")
+
+        # Bedrock
+        embedder = LiteLLMEmbedder(model="bedrock/amazon.titan-embed-text-v1")
+    """
+
+    def __init__(
+        self,
+        model: str = "text-embedding-3-small",
+        api_key: str | None = None,
+        dimensions: int | None = None,
+    ) -> None:
+        if not _dependency_available("litellm"):
+            raise ImportError(
+                "The 'litellm' package is required for LiteLLMEmbedder. "
+                "Install it with: pip install litellm"
+            )
+        self.model = model
+        self.api_key = api_key
+        self.dimensions = dimensions
+
+    def embed(self, text: str) -> list[float]:
+        import litellm
+
+        kwargs: dict[str, Any] = {"model": self.model, "input": [text]}
+        if self.api_key is not None:
+            kwargs["api_key"] = self.api_key
+        if self.dimensions is not None:
+            kwargs["dimensions"] = self.dimensions
+        response = litellm.embedding(**kwargs)
+        return list(response.data[0]["embedding"])
 
 
 class SentenceTransformerEmbedder:
@@ -124,8 +215,9 @@ def create_embedder(provider: str = "hash", **kwargs: Any) -> Embedder:
     Parameters
     ----------
     provider:
-        One of ``"hash"`` (default, no dependencies), ``"openai"``, or
-        ``"sentence_transformers"``.
+        One of ``"hash"`` (default), ``"openai"`` (also works with Gemini,
+        Cohere, Mistral, Together AI via ``base_url``), ``"litellm"`` (100+
+        providers), or ``"sentence_transformers"``.
     **kwargs:
         Forwarded to the chosen embedder constructor.
     """
@@ -133,6 +225,8 @@ def create_embedder(provider: str = "hash", **kwargs: Any) -> Embedder:
         return HashEmbedder(**kwargs)
     if provider == "openai":
         return OpenAIEmbedder(**kwargs)
+    if provider == "litellm":
+        return LiteLLMEmbedder(**kwargs)
     if provider in ("sentence_transformers", "sentence-transformers", "st"):
         return SentenceTransformerEmbedder(**kwargs)
     raise ValueError(f"Unknown embedding provider: {provider!r}")

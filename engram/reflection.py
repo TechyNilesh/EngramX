@@ -110,12 +110,17 @@ class LLMReflector:
 
 
 class OpenAIReflector(LLMReflector):
-    """Reflector that uses the OpenAI chat completions API."""
+    """Reflector using the OpenAI SDK format — works with any compatible provider.
+
+    Supports OpenAI, Gemini, Mistral, Together AI, and any provider that
+    exposes an OpenAI-compatible chat completions endpoint via ``base_url``.
+    """
 
     def __init__(
         self,
         model: str = "gpt-4o-mini",
         api_key: str | None = None,
+        base_url: str | None = None,
     ) -> None:
         if not _dependency_available("openai"):
             raise ImportError(
@@ -126,7 +131,12 @@ class OpenAIReflector(LLMReflector):
 
         import openai
 
-        self._client = openai.OpenAI(api_key=api_key) if api_key else openai.OpenAI()
+        client_kwargs: dict[str, Any] = {}
+        if api_key is not None:
+            client_kwargs["api_key"] = api_key
+        if base_url is not None:
+            client_kwargs["base_url"] = base_url
+        self._client = openai.OpenAI(**client_kwargs)
 
     def _call_llm(self, prompt: str) -> str:
         response = self._client.chat.completions.create(
@@ -134,6 +144,35 @@ class OpenAIReflector(LLMReflector):
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
         )
+        return response.choices[0].message.content or ""
+
+
+class LiteLLMReflector(LLMReflector):
+    """Reflector backed by LiteLLM — unified interface for 100+ providers."""
+
+    def __init__(
+        self,
+        model: str = "gpt-4o-mini",
+        api_key: str | None = None,
+    ) -> None:
+        if not _dependency_available("litellm"):
+            raise ImportError(
+                "The 'litellm' package is required for LiteLLMReflector. "
+                "Install it with: pip install litellm"
+            )
+        super().__init__(provider="litellm", model=model, api_key=api_key)
+
+    def _call_llm(self, prompt: str) -> str:
+        import litellm
+
+        kwargs: dict[str, Any] = {
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.3,
+        }
+        if self.api_key is not None:
+            kwargs["api_key"] = self.api_key
+        response = litellm.completion(**kwargs)
         return response.choices[0].message.content or ""
 
 
@@ -176,7 +215,8 @@ def create_reflector(provider: str = "openai", **kwargs: Any) -> LLMReflector:
     Parameters
     ----------
     provider:
-        One of ``"openai"`` (default) or ``"anthropic"``.
+        One of ``"openai"`` (default, also works with Gemini/Mistral/Together
+        via ``base_url``), ``"anthropic"``, or ``"litellm"`` (100+ providers).
     **kwargs:
         Forwarded to the chosen reflector constructor (``model``, ``api_key``, etc.).
     """
@@ -184,4 +224,6 @@ def create_reflector(provider: str = "openai", **kwargs: Any) -> LLMReflector:
         return OpenAIReflector(**kwargs)
     if provider == "anthropic":
         return AnthropicReflector(**kwargs)
+    if provider == "litellm":
+        return LiteLLMReflector(**kwargs)
     raise ValueError(f"Unknown reflector provider: {provider!r}")
