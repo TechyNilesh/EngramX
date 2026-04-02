@@ -1,7 +1,7 @@
 <p align="center">
   <img
-    src="assets/engramx_logo.png"
-    alt="Engram logo"
+    src="https://raw.githubusercontent.com/TechyNilesh/EngramX/main/assets/engramx_logo.png"
+    alt="EngramX logo"
     width="220"
   />
 </p>
@@ -66,10 +66,24 @@ The current ecosystem for agent memory is fragmented, framework-locked, and unde
 ## Installation
 
 ```bash
+# pip
 pip install engramx
+
+# uv
+uv add engramx
 ```
 
-Install with optional backends:
+**Install latest alpha directly from GitHub:**
+
+```bash
+# pip
+pip install git+https://github.com/TechyNilesh/EngramX.git
+
+# uv
+uv add git+https://github.com/TechyNilesh/EngramX.git
+```
+
+**Install with optional backends:**
 
 ```bash
 pip install engramx[postgres]           # PostgreSQL + pgvector
@@ -90,7 +104,7 @@ pip install engramx[langgraph]          # LangGraph agent memory
 pip install engramx[all]                # Everything
 ```
 
-Install from source:
+**Install from source (development):**
 
 ```bash
 git clone https://github.com/TechyNilesh/EngramX.git
@@ -697,7 +711,7 @@ python -m pytest -q
 ## Architecture
 
 ```
-engram/
+engramx/
   schema.py              # MemoryRecord, MemoryType, MemoryScope, SensitivityLevel
   client.py              # MemoryClient — unified API
   config.py              # YAML config loading
@@ -749,9 +763,9 @@ engram/
 ## Citation
 
 ```bibtex
-@software{verma2026engram,
+@software{verma2026engramx,
   author = {Nilesh Verma},
-  title = {Engram: The Open-Source Agent Memory Framework},
+  title = {EngramX: The Open-Source Agent Memory Framework},
   year = {2026},
   url = {https://github.com/TechyNilesh/EngramX},
   version = {0.1.0}
