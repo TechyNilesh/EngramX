@@ -118,7 +118,7 @@ pip install -e .[dev]
 
 ```python
 import asyncio
-from engramxx import MemoryClient
+from engramx import MemoryClient
 
 async def main() -> None:
     client = MemoryClient(driver="memory")
@@ -157,7 +157,7 @@ asyncio.run(main())
 
 ## Storage Backends
 
-Engram decouples the API from storage via a `BaseDriver` interface. All 9 drivers implement the same contract.
+EngramX decouples the API from storage via a `BaseDriver` interface. All 9 drivers implement the same contract.
 
 | Driver | Backend | Best for | Install extra |
 |---|---|---|---|
@@ -168,11 +168,11 @@ Engram decouples the API from storage via a `BaseDriver` interface. All 9 driver
 | `QdrantDriver` | Qdrant | High-performance vector search | `qdrant` |
 | `RedisDriver` | Redis / Valkey | Fast short-term memory, caching | `redis` |
 | `Neo4jDriver` | Neo4j | Graph-structured memory, temporal edges | `neo4j` |
-| `Mem0Driver` | Mem0 API | Delegate to Mem0 + Engram observability | `mem0` |
+| `Mem0Driver` | Mem0 API | Delegate to Mem0 + EngramX observability | `mem0` |
 | `ZepDriver` | Zep API | Delegate to Zep's temporal knowledge graph | `zep` |
 
 ```python
-from engramxx import MemoryClient
+from engramx import MemoryClient
 
 # Use any driver by name
 client = MemoryClient(driver="sqlite")
@@ -183,15 +183,15 @@ client = MemoryClient(driver="redis")
 client = MemoryClient(driver="neo4j")
 
 # Or pass a driver instance directly
-from engramxx import PostgresDriver
-client = MemoryClient(PostgresDriver(dsn="postgresql://localhost/engram"))
+from engramx import PostgresDriver
+client = MemoryClient(PostgresDriver(dsn="postgresql://localhost/engramx"))
 ```
 
 ---
 
 ## Memory Types
 
-Engram enforces meaningful separation of three cognitive memory types:
+EngramX enforces meaningful separation of three cognitive memory types:
 
 **Episodic** — Raw experiences: conversation turns, tool calls, agent decisions.
 
@@ -239,10 +239,10 @@ All methods are async-first with sync wrappers (`add_sync`, `search_sync`).
 Lifecycle policies are declarative YAML — no imperative code required.
 
 ```yaml
-# engram.yaml
+# engramx.yaml
 driver:
   kind: sqlite
-  path: .engram/engram.db
+  path: .engramx/engramx.db
 
 policies:
   extraction:
@@ -283,18 +283,18 @@ policies:
 ```
 
 ```python
-from engramxx import MemoryClient
-client = MemoryClient(config="engram.yaml")
+from engramx import MemoryClient
+client = MemoryClient(config="engramx.yaml")
 ```
 
 ---
 
 ## Embedding Providers
 
-Engram ships with a dependency-free hash embedder and supports real embedding models. The OpenAI embedder uses the OpenAI SDK format which works with **any compatible provider** via `base_url`.
+EngramX ships with a dependency-free hash embedder and supports real embedding models. The OpenAI embedder uses the OpenAI SDK format which works with **any compatible provider** via `base_url`.
 
 ```python
-from engramxx import create_embedder
+from engramx import create_embedder
 
 # Default: hash-based (no dependencies, deterministic)
 embedder = create_embedder("hash")
@@ -360,7 +360,7 @@ client = MemoryClient(driver="memory", embedder=embedder)
 Summarize episodic memory into durable knowledge using LLM-powered reflection:
 
 ```python
-from engramxx import create_reflector
+from engramx import create_reflector
 
 # OpenAI
 reflector = create_reflector("openai", model="gpt-4o-mini")
@@ -388,8 +388,8 @@ reflector = create_reflector("litellm", model="cohere/command-r-plus")
 ### LangChain
 
 ```python
-from engramxx import MemoryClient
-from engramxx.adapters import EngramChatMemory
+from engramx import MemoryClient
+from engramx.adapters import EngramChatMemory
 
 client = MemoryClient(driver="sqlite")
 memory = EngramChatMemory(client=client, user_id="u-123")
@@ -402,8 +402,8 @@ memory.save_context({"input": "Use metric"}, {"output": "Noted!"})
 ### LlamaIndex
 
 ```python
-from engramxx import MemoryClient
-from engramxx.adapters import EngramMemoryBlock
+from engramx import MemoryClient
+from engramx.adapters import EngramMemoryBlock
 
 client = MemoryClient(driver="sqlite")
 block = EngramMemoryBlock(client=client, user_id="u-123")
@@ -415,8 +415,8 @@ block.put("User prefers metric units.")
 ### AutoGen
 
 ```python
-from engramxx import MemoryClient
-from engramxx.adapters import EngramAutoGenMemory
+from engramx import MemoryClient
+from engramx.adapters import EngramAutoGenMemory
 
 client = MemoryClient(driver="sqlite")
 memory = EngramAutoGenMemory(client=client, user_id="u-123")
@@ -427,7 +427,7 @@ memory.add("User prefers credit card payments.")
 
 ### LangGraph
 
-Use Engram as long-term memory in LangGraph agents. Engram handles cross-session memory while LangGraph checkpoints handle short-term thread state.
+Use EngramX as long-term memory in LangGraph agents. EngramX handles cross-session memory while LangGraph checkpoints handle short-term thread state.
 
 ```python
 from langgraph.graph import StateGraph, START, END
@@ -436,10 +436,10 @@ from langchain_openai import ChatOpenAI
 from typing import Annotated, TypedDict
 import operator
 
-from engramxx import MemoryClient
+from engramx import MemoryClient
 
-# Initialize Engram for long-term memory
-engram = MemoryClient(driver="sqlite")
+# Initialize EngramX for long-term memory
+engramx = MemoryClient(driver="sqlite")
 model = ChatOpenAI(model="gpt-4o-mini")
 
 
@@ -452,11 +452,11 @@ class AgentState(TypedDict):
 
 # 2. Memory retrieval node — runs before LLM
 async def recall_memories(state: AgentState) -> dict:
-    """Retrieve relevant Engram memories and inject into context."""
+    """Retrieve relevant EngramX memories and inject into context."""
     user_msg = state["messages"][-1].content if state["messages"] else ""
     user_id = state.get("user_id", "default")
 
-    memories = await engram.search(
+    memories = await engramx.search(
         query=user_msg,
         filters={"user_id": user_id},
         top_k=5,
@@ -486,14 +486,14 @@ async def call_llm(state: AgentState) -> dict:
 
 # 4. Memory persistence node — runs after LLM response
 async def persist_memories(state: AgentState) -> dict:
-    """Store the conversation turn as episodic memory in Engram."""
+    """Store the conversation turn as episodic memory in EngramX."""
     user_id = state.get("user_id", "default")
     messages = state["messages"]
 
     if len(messages) >= 2:
         user_msg = messages[-2].content
         ai_msg = messages[-1].content
-        await engram.add(
+        await engramx.add(
             type="episodic",
             scope="user",
             user_id=user_id,
@@ -525,7 +525,7 @@ agent = graph.compile()
 # })
 ```
 
-**LangGraph + Engram architecture:**
+**LangGraph + EngramX architecture:**
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -535,13 +535,13 @@ agent = graph.compile()
 │             │                    │               │
 │             ▼                    ▼               │
 │     ┌──────────────┐    ┌──────────────┐        │
-│     │    Engram     │    │    Engram     │        │
+│     │    EngramX   │    │    EngramX   │        │
 │     │   search()    │    │    add()      │        │
 │     │  (long-term)  │    │  (long-term)  │        │
 │     └──────────────┘    └──────────────┘        │
 │                                                 │
 │  Short-term state: LangGraph checkpoints        │
-│  Long-term memory: Engram (any backend)         │
+│  Long-term memory: EngramX (any backend)         │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -552,7 +552,7 @@ agent = graph.compile()
 Track which memories influenced agent output:
 
 ```python
-from engramxx import MemoryClient
+from engramx import MemoryClient
 
 client = MemoryClient(driver="memory")
 
@@ -572,7 +572,7 @@ print(attribution.policies_fired)   # ["extract-user-preferences"]
 Or use the standalone `EngramAgent` with OpenAI:
 
 ```python
-from engramxx import MemoryClient, EngramAgent
+from engramx import MemoryClient, EngramAgent
 
 client = MemoryClient(driver="sqlite")
 agent = EngramAgent(client=client, model="gpt-4o-mini")
@@ -621,9 +621,9 @@ for event in events:
 Schedule automatic decay, promotion, and governance enforcement:
 
 ```python
-from engramxx import MemoryClient, PolicyJobScheduler
+from engramx import MemoryClient, PolicyJobScheduler
 
-client = MemoryClient(config="engram.yaml")
+client = MemoryClient(config="engramx.yaml")
 scheduler = PolicyJobScheduler(
     driver=client.driver,
     policy_engine=client.policy_engine,
@@ -650,7 +650,7 @@ Example chat loop with persistent memory:
 
 ```python
 from openai import OpenAI
-from engramxx import MemoryClient
+from engramx import MemoryClient
 
 openai_client = OpenAI()
 memory = MemoryClient(driver="sqlite")
