@@ -38,7 +38,7 @@ class ZepDriver(BaseDriver):
         if not _dependency_available():
             raise RuntimeError(
                 "ZepDriver requires the optional `zep_python` dependency. "
-                "Install it with: pip install engram[zep]"
+                "Install it with: pip install engramx[zep]"
             )
 
         from zep_python import ZepClient  # type: ignore[import-untyped]

@@ -32,9 +32,9 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from engram import MemoryClient
-from engram.config import EngramConfig
-from engram.observability import OutputAttribution, ScoredMemory
+from engramx import MemoryClient
+from engramx.config import EngramConfig
+from engramx.observability import OutputAttribution, ScoredMemory
 
 
 # =====================================================================
@@ -229,7 +229,7 @@ async def manual_attribution_demo() -> None:
 # automatically searches memories, builds a context prompt, calls the
 # LLM, and returns the response with full attribution.
 #
-# from engram.agent import EngramAgent
+# from engramx.agent import EngramAgent
 #
 # async def agent_demo() -> None:
 #     client = MemoryClient(driver="memory")

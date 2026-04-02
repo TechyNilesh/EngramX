@@ -3,7 +3,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "engram"
+name = "engramx"
 version = "0.1.0"
 description = "Framework-agnostic agent memory layer with policies, observability, and pluggable storage"
 requires-python = ">=3.10"
@@ -46,4 +46,4 @@ all = [
 ]
 
 [tool.setuptools]
-packages = ["engram", "engram.storage", "engram.adapters"]
+packages = ["engramx", "engramx.storage", "engramx.adapters"]

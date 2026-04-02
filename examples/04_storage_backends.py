@@ -24,8 +24,8 @@ import asyncio
 import tempfile
 from pathlib import Path
 
-from engram.client import MemoryClient
-from engram.schema import MemoryRecord
+from engramx.client import MemoryClient
+from engramx.schema import MemoryRecord
 
 
 # ---------------------------------------------------------------------------
@@ -145,7 +145,7 @@ async def demo_sqlite() -> None:
 #
 # Or instantiate the driver directly:
 #
-#     from engram.storage.postgres import PostgresDriver
+#     from engramx.storage.postgres import PostgresDriver
 #     driver = PostgresDriver(
 #         dsn="postgresql://user:password@localhost:5432/engram",
 #         table_name="engram_memories",   # default
@@ -174,7 +174,7 @@ async def demo_sqlite() -> None:
 #
 # Or via the driver class:
 #
-#     from engram.storage.chroma import ChromaDriver
+#     from engramx.storage.chroma import ChromaDriver
 #     driver = ChromaDriver(
 #         path="/tmp/chroma_data",
 #         collection_name="engram_memories",   # default
@@ -203,7 +203,7 @@ async def demo_sqlite() -> None:
 #
 # Or via the driver class:
 #
-#     from engram.storage.qdrant import QdrantDriver
+#     from engramx.storage.qdrant import QdrantDriver
 #     driver = QdrantDriver(
 #         url="http://localhost:6333",
 #         collection_name="engram_memories",   # default
@@ -229,7 +229,7 @@ async def demo_sqlite() -> None:
 #
 # Or via the driver class:
 #
-#     from engram.storage.redis import RedisDriver
+#     from engramx.storage.redis import RedisDriver
 #     driver = RedisDriver(
 #         url="redis://localhost:6379",
 #         prefix="engram:",   # default key prefix
@@ -255,7 +255,7 @@ async def demo_sqlite() -> None:
 #
 # Or via the driver class:
 #
-#     from engram.storage.neo4j import Neo4jDriver
+#     from engramx.storage.neo4j import Neo4jDriver
 #     driver = Neo4jDriver(
 #         uri="bolt://localhost:7687",
 #         auth=("neo4j", "neo4j"),   # default
@@ -282,7 +282,7 @@ async def demo_sqlite() -> None:
 #
 # Or via the driver class:
 #
-#     from engram.storage.mem0 import Mem0Driver
+#     from engramx.storage.mem0 import Mem0Driver
 #     driver = Mem0Driver(
 #         api_key="m0-...",
 #         org_id="org-...",          # optional
@@ -309,7 +309,7 @@ async def demo_sqlite() -> None:
 #
 # Or via the driver class:
 #
-#     from engram.storage.zep import ZepDriver
+#     from engramx.storage.zep import ZepDriver
 #     driver = ZepDriver(
 #         api_key="z_...",
 #         base_url="https://api.getzep.com",   # optional override

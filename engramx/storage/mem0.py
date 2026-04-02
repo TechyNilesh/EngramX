@@ -34,7 +34,7 @@ class Mem0Driver(BaseDriver):
         if not _dependency_available():
             raise RuntimeError(
                 "Mem0Driver requires the optional `mem0` dependency. "
-                "Install it with: pip install engram[mem0]"
+                "Install it with: pip install engramx[mem0]"
             )
 
         from mem0 import MemoryClient as Mem0MemoryClient  # type: ignore[import-untyped]

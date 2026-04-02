@@ -5,9 +5,9 @@ from datetime import datetime, timezone
 
 import pytest
 
-from engram.client import MemoryClient
-from engram.schema import MemoryRecord, new_memory_id
-from engram.storage.memory import InMemoryDriver
+from engramxx.client import MemoryClient
+from engramxx.schema import MemoryRecord, new_memory_id
+from engramxx.storage.memory import InMemoryDriver
 
 
 @pytest.mark.asyncio

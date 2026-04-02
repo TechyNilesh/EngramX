@@ -26,7 +26,7 @@ import asyncio
 from dataclasses import dataclass, field
 from typing import Any
 
-from engram import MemoryClient
+from engramx import MemoryClient
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -209,7 +209,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
 
-from engram import MemoryClient
+from engramx import MemoryClient
 
 # --- Setup ---
 engram = MemoryClient(driver="sqlite")

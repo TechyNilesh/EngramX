@@ -1,9 +1,9 @@
 import pytest
 
-from engram.client import MemoryClient
-from engram.schema import MemoryRecord
-from engram.storage.memory import InMemoryDriver
-from engram.storage.sqlite import SQLiteDriver
+from engramxx.client import MemoryClient
+from engramxx.schema import MemoryRecord
+from engramxx.storage.memory import InMemoryDriver
+from engramxx.storage.sqlite import SQLiteDriver
 
 
 @pytest.mark.asyncio

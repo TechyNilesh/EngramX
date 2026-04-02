@@ -24,8 +24,8 @@ Run this file directly:
 
 import asyncio
 
-from engram import MemoryClient
-from engram.embedding import (
+from engramx import MemoryClient
+from engramx.embedding import (
     HashEmbedder,
     cosine_similarity,
     create_embedder,
@@ -103,7 +103,7 @@ def openai_embedder_examples() -> None:
     """
 
     # --- OpenAI (default) ---------------------------------------------------
-    # from engram.embedding import OpenAIEmbedder
+    # from engramx.embedding import OpenAIEmbedder
     #
     # embedder = OpenAIEmbedder(model="text-embedding-3-small")
     # vec = embedder.embed("Hello, world!")
@@ -146,7 +146,7 @@ def openai_embedder_examples() -> None:
     # )
 
     # --- Using the factory ---------------------------------------------------
-    # from engram.embedding import create_embedder
+    # from engramx.embedding import create_embedder
     #
     # embedder = create_embedder(
     #     "openai",
@@ -170,7 +170,7 @@ def litellm_embedder_examples() -> None:
     Requires: pip install litellm
     """
 
-    # from engram.embedding import LiteLLMEmbedder
+    # from engramx.embedding import LiteLLMEmbedder
     #
     # # OpenAI via LiteLLM
     # embedder = LiteLLMEmbedder(model="text-embedding-3-small")
@@ -192,7 +192,7 @@ def litellm_embedder_examples() -> None:
     # )
     #
     # # Factory shorthand
-    # from engram.embedding import create_embedder
+    # from engramx.embedding import create_embedder
     # embedder = create_embedder("litellm", model="cohere/embed-english-v3.0")
 
     print("=== LiteLLM Embedder ===")
@@ -211,7 +211,7 @@ def sentence_transformer_examples() -> None:
     Requires: pip install sentence-transformers
     """
 
-    # from engram.embedding import SentenceTransformerEmbedder
+    # from engramx.embedding import SentenceTransformerEmbedder
     #
     # # Default model: all-MiniLM-L6-v2 (384 dims, fast, good quality)
     # embedder = SentenceTransformerEmbedder()
@@ -222,7 +222,7 @@ def sentence_transformer_examples() -> None:
     # embedder = SentenceTransformerEmbedder(model_name="all-mpnet-base-v2")
     #
     # # Factory shorthand (accepts "sentence_transformers", "sentence-transformers", or "st")
-    # from engram.embedding import create_embedder
+    # from engramx.embedding import create_embedder
     # embedder = create_embedder("st", model_name="all-MiniLM-L6-v2")
 
     print("=== SentenceTransformer Embedder ===")

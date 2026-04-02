@@ -33,15 +33,15 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
-from engram import MemoryClient
-from engram.config import (
+from engramx import MemoryClient
+from engramx.config import (
     EngramConfig,
     ExtractionRule,
     PolicyConfig,
     SummarizationRule,
 )
-from engram.reflection import LLMReflector, _build_prompt, _parse_llm_response
-from engram.schema import MemoryRecord
+from engramx.reflection import LLMReflector, _build_prompt, _parse_llm_response
+from engramx.schema import MemoryRecord
 
 
 # =====================================================================
@@ -49,7 +49,7 @@ from engram.schema import MemoryRecord
 # =====================================================================
 
 # --- OpenAI (default) ------------------------------------------------
-# from engram.reflection import create_reflector
+# from engramx.reflection import create_reflector
 # openai_reflector = create_reflector("openai", model="gpt-4o-mini")
 
 # --- Anthropic -------------------------------------------------------
@@ -59,7 +59,7 @@ from engram.schema import MemoryRecord
 # litellm_reflector = create_reflector("litellm", model="gpt-4o-mini")
 
 # --- OpenAI-compatible endpoint (e.g. Ollama, Together, vLLM) --------
-# from engram.reflection import OpenAIReflector
+# from engramx.reflection import OpenAIReflector
 # local_reflector = OpenAIReflector(
 #     model="llama3",
 #     base_url="http://localhost:11434/v1",

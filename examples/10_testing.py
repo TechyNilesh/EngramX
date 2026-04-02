@@ -24,7 +24,7 @@ No external dependencies are needed -- run this file directly:
 
 import asyncio
 
-from engram.testing import MemoryHarness
+from engramx.testing import MemoryHarness
 
 
 # ---------------------------------------------------------------------------

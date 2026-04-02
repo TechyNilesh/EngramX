@@ -1,6 +1,6 @@
 import pytest
 
-from engram.testing import MemoryHarness
+from engramxx.testing import MemoryHarness
 
 
 @pytest.mark.asyncio

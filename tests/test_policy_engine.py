@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 import unittest
 
-from engram.config import load_policy_config
-from engram.models import MemoryEvent, MemoryRecord
-from engram.policy import PolicyEngine
+from engramxx.config import load_policy_config
+from engramxx.models import MemoryEvent, MemoryRecord
+from engramxx.policy import PolicyEngine
 
 
 class PolicyEngineTests(unittest.TestCase):

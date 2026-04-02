@@ -23,10 +23,10 @@ Run this file directly:
 
 from __future__ import annotations
 
-from engram import MemoryClient
-from engram.adapters.langchain import EngramChatMemory
-from engram.adapters.llamaindex import EngramMemoryBlock
-from engram.adapters.autogen import EngramAutoGenMemory
+from engramx import MemoryClient
+from engramx.adapters.langchain import EngramChatMemory
+from engramx.adapters.llamaindex import EngramMemoryBlock
+from engramx.adapters.autogen import EngramAutoGenMemory
 
 
 def separator(title: str) -> None:

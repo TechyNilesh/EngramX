@@ -17,8 +17,8 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timedelta, timezone
 
-from engram.client import MemoryClient
-from engram.models import MemorySignal
+from engramx.client import MemoryClient
+from engramx.models import MemorySignal
 
 # ---------------------------------------------------------------------------
 # 1. Policy configuration expressed as a YAML string

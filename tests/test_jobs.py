@@ -4,11 +4,11 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from engram.config import load_policy_config
-from engram.jobs import PolicyJobScheduler
-from engram.policy import PolicyEngine
-from engram.schema import MemoryRecord
-from engram.storage.memory import InMemoryDriver
+from engramxx.config import load_policy_config
+from engramxx.jobs import PolicyJobScheduler
+from engramxx.policy import PolicyEngine
+from engramxx.schema import MemoryRecord
+from engramxx.storage.memory import InMemoryDriver
 
 
 @pytest.mark.asyncio

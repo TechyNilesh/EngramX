@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from engram.client import MemoryClient
-from engram.observability import ScoredMemory
-from engram.storage.memory import InMemoryDriver
+from engramxx.client import MemoryClient
+from engramxx.observability import ScoredMemory
+from engramxx.storage.memory import InMemoryDriver
 
 
 @pytest.mark.asyncio

@@ -20,7 +20,7 @@ Run this file directly:
 
 import asyncio
 
-from engram import MemoryClient
+from engramx import MemoryClient
 
 
 # ---------------------------------------------------------------------------

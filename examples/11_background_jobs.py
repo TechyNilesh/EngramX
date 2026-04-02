@@ -23,8 +23,8 @@ No external dependencies are needed -- run this file directly:
 import asyncio
 from datetime import datetime, timedelta, timezone
 
-from engram.client import MemoryClient
-from engram.jobs import PolicyJobScheduler
+from engramx.client import MemoryClient
+from engramx.jobs import PolicyJobScheduler
 
 
 # ---------------------------------------------------------------------------

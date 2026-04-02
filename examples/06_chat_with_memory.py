@@ -21,7 +21,7 @@ Run this file directly:
 
 from __future__ import annotations
 
-from engram import MemoryClient
+from engramx import MemoryClient
 
 
 # ---------------------------------------------------------------------------

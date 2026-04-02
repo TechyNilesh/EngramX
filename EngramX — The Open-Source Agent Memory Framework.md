@@ -174,7 +174,7 @@ class MemoryRecord:
 Engram exposes a minimal, consistent API regardless of which backend is active:
 
 ```python
-from engram import MemoryClient
+from engramx import MemoryClient
 
 client = MemoryClient(config="engram.yaml")  # or programmatic config
 
@@ -441,7 +441,7 @@ print(attribution.policies_fired)  # ["log-all-tool-failures", "extract-user-pre
 Built-in pytest-compatible utilities for testing memory behavior in CI:
 
 ```python
-from engram.testing import MemoryHarness
+from engramx.testing import MemoryHarness
 
 async def test_preference_extraction():
     harness = MemoryHarness(driver="sqlite")  # In-memory for tests
@@ -472,7 +472,7 @@ Engram provides thin shims for every major agent framework.
 #### LangChain Adapter
 
 ```python
-from engram.adapters.langchain import EngramChatMessageHistory, EngramEntityMemory
+from engramx.adapters.langchain import EngramChatMessageHistory, EngramEntityMemory
 
 # Drop-in replacement for LangChain's chat message history
 history = EngramChatMessageHistory(
@@ -494,7 +494,7 @@ chain = ConversationChain(llm=llm, memory=entity_mem)
 #### LlamaIndex Adapter
 
 ```python
-from engram.adapters.llamaindex import EngramMemoryBlock
+from engramx.adapters.llamaindex import EngramMemoryBlock
 
 # Implements LlamaIndex's MemoryBlock interface
 block = EngramMemoryBlock(
@@ -511,7 +511,7 @@ agent = ReActAgent.from_tools(tools, memory=Memory.from_blocks([block]))
 #### AutoGen Adapter
 
 ```python
-from engram.adapters.autogen import EngramMemory
+from engramx.adapters.autogen import EngramMemory
 
 # Implements AutoGen's Memory interface
 mem = EngramMemory(
@@ -532,7 +532,7 @@ assistant = AssistantAgent(
 For raw agent loops (no framework):
 
 ```python
-from engram import MemoryClient, MemoryMiddleware
+from engramx import MemoryClient, MemoryMiddleware
 
 client = MemoryClient(config="engram.yaml")
 middleware = MemoryMiddleware(client=client)
@@ -746,7 +746,7 @@ engram benchmark run --suite locomo
 ```
 
 ```python
-from engram import MemoryClient
+from engramx import MemoryClient
 
 client = MemoryClient.from_config("engram.yaml")
 
@@ -790,7 +790,7 @@ Engram is designed as a community-first project. Areas where contributions are m
 
 **Primary name:** `engram`
 **PyPI package:** `engram`
-**Import:** `import engram`
+**Import:** `import engramx`
 **CLI:** `engram`
 **GitHub org (suggested):** `engram-ai` or `engram-memory`
 **Tagline:** *"Memory for agents that learn."*

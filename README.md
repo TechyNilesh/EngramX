@@ -9,14 +9,14 @@
 <p align="center"><strong>The Open-Source Agent Memory Framework</strong></p>
 
 <p align="center">
-  <a href="https://github.com/TechyNilesh/engram">
-    <img src="https://img.shields.io/github/last-commit/TechyNilesh/engram?style=for-the-badge" alt="Last commit" />
+  <a href="https://github.com/TechyNilesh/EngramX">
+    <img src="https://img.shields.io/github/last-commit/TechyNilesh/EngramX?style=for-the-badge" alt="Last commit" />
   </a>
-  <a href="https://github.com/TechyNilesh/engram/stargazers">
-    <img src="https://img.shields.io/github/stars/TechyNilesh/engram?style=for-the-badge" alt="GitHub stars" />
+  <a href="https://github.com/TechyNilesh/EngramX/stargazers">
+    <img src="https://img.shields.io/github/stars/TechyNilesh/EngramX?style=for-the-badge" alt="GitHub stars" />
   </a>
-  <a href="https://pypi.org/project/engram/">
-    <img src="https://img.shields.io/pepy/dt/engram?style=for-the-badge" alt="Total downloads" />
+  <a href="https://pypi.org/project/engramx/">
+    <img src="https://img.shields.io/pepy/dt/engramx?style=for-the-badge" alt="Total downloads" />
   </a>
   <img src="https://img.shields.io/badge/status-alpha-orange?style=for-the-badge" alt="Project status" />
   <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white&style=for-the-badge" alt="Python 3.10+" />
@@ -24,15 +24,15 @@
 
 ---
 
-## Why Engram?
+## Why EngramX?
 
-An **engram** (from the Greek *engramma*, "that which is written on") is the neuroscience term for the physical trace a memory leaves in the brain. Engram brings the same idea to AI agents: structured, durable, queryable memory that works across any framework or backend.
+An **engram** (from the Greek *engramma*, "that which is written on") is the neuroscience term for the physical trace a memory leaves in the brain. EngramX brings the same idea to AI agents: structured, durable, queryable memory that works across any framework or backend.
 
-The current ecosystem for agent memory is fragmented, framework-locked, and under-tooled. Every platform defines memory differently, uses incompatible schemas, and provides minimal support for debugging, governance, or cross-framework composability. **Engram is the neutral abstraction layer that sits under or beside any of them.**
+The current ecosystem for agent memory is fragmented, framework-locked, and under-tooled. Every platform defines memory differently, uses incompatible schemas, and provides minimal support for debugging, governance, or cross-framework composability. **EngramX is the neutral abstraction layer that sits under or beside any of them.**
 
-## How Engram Compares
+## How EngramX Compares
 
-| Dimension | Mem0 | Zep | Letta/MemGPT | LangChain | **Engram** |
+| Dimension | Mem0 | Zep | Letta/MemGPT | LangChain | **EngramX** |
 |---|---|---|---|---|---|
 | Common memory schema | Proprietary | Proprietary | Proprietary | Per-pattern | **Canonical** |
 | Episodic / Semantic / Procedural | Partial | Partial | Partial (tiers) | Partial | **First-class** |
@@ -66,35 +66,35 @@ The current ecosystem for agent memory is fragmented, framework-locked, and unde
 ## Installation
 
 ```bash
-pip install engram
+pip install engramx
 ```
 
 Install with optional backends:
 
 ```bash
-pip install engram[postgres]           # PostgreSQL + pgvector
-pip install engram[chroma]             # ChromaDB
-pip install engram[qdrant]             # Qdrant
-pip install engram[redis]              # Redis
-pip install engram[neo4j]              # Neo4j
-pip install engram[mem0]               # Mem0 delegation
-pip install engram[zep]                # Zep delegation
-pip install engram[openai]             # OpenAI embeddings + reflection
-pip install engram[anthropic]          # Anthropic reflection
-pip install engram[litellm]            # LiteLLM (100+ providers)
-pip install engram[sentence-transformers]  # Local embeddings
-pip install engram[langchain]          # LangChain adapter
-pip install engram[llamaindex]         # LlamaIndex adapter
-pip install engram[autogen]            # AutoGen adapter
-pip install engram[langgraph]          # LangGraph agent memory
-pip install engram[all]                # Everything
+pip install engramx[postgres]           # PostgreSQL + pgvector
+pip install engramx[chroma]             # ChromaDB
+pip install engramx[qdrant]             # Qdrant
+pip install engramx[redis]              # Redis
+pip install engramx[neo4j]              # Neo4j
+pip install engramx[mem0]               # Mem0 delegation
+pip install engramx[zep]                # Zep delegation
+pip install engramx[openai]             # OpenAI embeddings + reflection
+pip install engramx[anthropic]          # Anthropic reflection
+pip install engramx[litellm]            # LiteLLM (100+ providers)
+pip install engramx[sentence-transformers]  # Local embeddings
+pip install engramx[langchain]          # LangChain adapter
+pip install engramx[llamaindex]         # LlamaIndex adapter
+pip install engramx[autogen]            # AutoGen adapter
+pip install engramx[langgraph]          # LangGraph agent memory
+pip install engramx[all]                # Everything
 ```
 
 Install from source:
 
 ```bash
-git clone https://github.com/TechyNilesh/engram.git
-cd engram
+git clone https://github.com/TechyNilesh/EngramX.git
+cd EngramX
 pip install -e .[dev]
 ```
 
@@ -104,7 +104,7 @@ pip install -e .[dev]
 
 ```python
 import asyncio
-from engram import MemoryClient
+from engramxx import MemoryClient
 
 async def main() -> None:
     client = MemoryClient(driver="memory")
@@ -158,7 +158,7 @@ Engram decouples the API from storage via a `BaseDriver` interface. All 9 driver
 | `ZepDriver` | Zep API | Delegate to Zep's temporal knowledge graph | `zep` |
 
 ```python
-from engram import MemoryClient
+from engramxx import MemoryClient
 
 # Use any driver by name
 client = MemoryClient(driver="sqlite")
@@ -169,7 +169,7 @@ client = MemoryClient(driver="redis")
 client = MemoryClient(driver="neo4j")
 
 # Or pass a driver instance directly
-from engram import PostgresDriver
+from engramxx import PostgresDriver
 client = MemoryClient(PostgresDriver(dsn="postgresql://localhost/engram"))
 ```
 
@@ -269,7 +269,7 @@ policies:
 ```
 
 ```python
-from engram import MemoryClient
+from engramxx import MemoryClient
 client = MemoryClient(config="engram.yaml")
 ```
 
@@ -280,7 +280,7 @@ client = MemoryClient(config="engram.yaml")
 Engram ships with a dependency-free hash embedder and supports real embedding models. The OpenAI embedder uses the OpenAI SDK format which works with **any compatible provider** via `base_url`.
 
 ```python
-from engram import create_embedder
+from engramxx import create_embedder
 
 # Default: hash-based (no dependencies, deterministic)
 embedder = create_embedder("hash")
@@ -330,13 +330,13 @@ client = MemoryClient(driver="memory", embedder=embedder)
 
 | Provider | Via | Install |
 |---|---|---|
-| OpenAI | `create_embedder("openai")` | `pip install engram[openai]` |
-| Google Gemini | `create_embedder("openai", base_url=...)` | `pip install engram[openai]` |
-| Cohere | `create_embedder("openai", base_url=...)` | `pip install engram[openai]` |
-| Mistral | `create_embedder("openai", base_url=...)` | `pip install engram[openai]` |
-| Together AI | `create_embedder("openai", base_url=...)` | `pip install engram[openai]` |
-| LiteLLM (100+) | `create_embedder("litellm")` | `pip install engram[litellm]` |
-| Sentence Transformers | `create_embedder("sentence_transformers")` | `pip install engram[sentence-transformers]` |
+| OpenAI | `create_embedder("openai")` | `pip install engramx[openai]` |
+| Google Gemini | `create_embedder("openai", base_url=...)` | `pip install engramx[openai]` |
+| Cohere | `create_embedder("openai", base_url=...)` | `pip install engramx[openai]` |
+| Mistral | `create_embedder("openai", base_url=...)` | `pip install engramx[openai]` |
+| Together AI | `create_embedder("openai", base_url=...)` | `pip install engramx[openai]` |
+| LiteLLM (100+) | `create_embedder("litellm")` | `pip install engramx[litellm]` |
+| Sentence Transformers | `create_embedder("sentence_transformers")` | `pip install engramx[sentence-transformers]` |
 | Hash (local, no deps) | `create_embedder("hash")` | — |
 
 ---
@@ -346,7 +346,7 @@ client = MemoryClient(driver="memory", embedder=embedder)
 Summarize episodic memory into durable knowledge using LLM-powered reflection:
 
 ```python
-from engram import create_reflector
+from engramxx import create_reflector
 
 # OpenAI
 reflector = create_reflector("openai", model="gpt-4o-mini")
@@ -374,8 +374,8 @@ reflector = create_reflector("litellm", model="cohere/command-r-plus")
 ### LangChain
 
 ```python
-from engram import MemoryClient
-from engram.adapters import EngramChatMemory
+from engramxx import MemoryClient
+from engramxx.adapters import EngramChatMemory
 
 client = MemoryClient(driver="sqlite")
 memory = EngramChatMemory(client=client, user_id="u-123")
@@ -388,8 +388,8 @@ memory.save_context({"input": "Use metric"}, {"output": "Noted!"})
 ### LlamaIndex
 
 ```python
-from engram import MemoryClient
-from engram.adapters import EngramMemoryBlock
+from engramxx import MemoryClient
+from engramxx.adapters import EngramMemoryBlock
 
 client = MemoryClient(driver="sqlite")
 block = EngramMemoryBlock(client=client, user_id="u-123")
@@ -401,8 +401,8 @@ block.put("User prefers metric units.")
 ### AutoGen
 
 ```python
-from engram import MemoryClient
-from engram.adapters import EngramAutoGenMemory
+from engramxx import MemoryClient
+from engramxx.adapters import EngramAutoGenMemory
 
 client = MemoryClient(driver="sqlite")
 memory = EngramAutoGenMemory(client=client, user_id="u-123")
@@ -422,7 +422,7 @@ from langchain_openai import ChatOpenAI
 from typing import Annotated, TypedDict
 import operator
 
-from engram import MemoryClient
+from engramxx import MemoryClient
 
 # Initialize Engram for long-term memory
 engram = MemoryClient(driver="sqlite")
@@ -538,7 +538,7 @@ agent = graph.compile()
 Track which memories influenced agent output:
 
 ```python
-from engram import MemoryClient
+from engramxx import MemoryClient
 
 client = MemoryClient(driver="memory")
 
@@ -558,7 +558,7 @@ print(attribution.policies_fired)   # ["extract-user-preferences"]
 Or use the standalone `EngramAgent` with OpenAI:
 
 ```python
-from engram import MemoryClient, EngramAgent
+from engramxx import MemoryClient, EngramAgent
 
 client = MemoryClient(driver="sqlite")
 agent = EngramAgent(client=client, model="gpt-4o-mini")
@@ -607,7 +607,7 @@ for event in events:
 Schedule automatic decay, promotion, and governance enforcement:
 
 ```python
-from engram import MemoryClient, PolicyJobScheduler
+from engramxx import MemoryClient, PolicyJobScheduler
 
 client = MemoryClient(config="engram.yaml")
 scheduler = PolicyJobScheduler(
@@ -636,7 +636,7 @@ Example chat loop with persistent memory:
 
 ```python
 from openai import OpenAI
-from engram import MemoryClient
+from engramxx import MemoryClient
 
 openai_client = OpenAI()
 memory = MemoryClient(driver="sqlite")
@@ -684,8 +684,8 @@ The test suite covers storage drivers, the policy engine, test harness, adapters
 ## Development
 
 ```bash
-git clone https://github.com/TechyNilesh/engram.git
-cd engram
+git clone https://github.com/TechyNilesh/EngramX.git
+cd EngramX
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .[dev]
@@ -753,7 +753,7 @@ engram/
   author = {Nilesh Verma},
   title = {Engram: The Open-Source Agent Memory Framework},
   year = {2026},
-  url = {https://github.com/TechyNilesh/engram},
+  url = {https://github.com/TechyNilesh/EngramX},
   version = {0.1.0}
 }
 ```
