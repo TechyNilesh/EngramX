@@ -1,6 +1,6 @@
 <p align="center">
   <img
-    src="assets/engram_logo.png"
+    src="assets/engramx_logo.png"
     alt="Engram logo"
     width="220"
   />
